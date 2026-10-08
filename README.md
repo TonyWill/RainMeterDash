@@ -1,6 +1,6 @@
 # ScreenPad dashboard
 
-This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. The `illustro` folder is Rainmeter's stock suite and is left as it came. It can stay loaded underneath the dashboard.
+This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. Rainmeter's stock `illustro` suite can stay installed beside it. Git does not track that folder.
 
 The ScreenPad is the second display: 1920 by 515 pixels, with its top-left corner at virtual-screen position `0, 1080`. On every refresh the skin turns dragging and edge-snapping off, stays above the desktop, and moves itself to that corner. Those coordinates are `OriginX` and `OriginY` in `Duo\@Resources\Variables.inc`.
 
@@ -16,6 +16,8 @@ Three glass cards sit on a slightly transparent dark wash, so the wallpaper show
 
 Right-click anywhere on the skin for the same choices as the Customize panel. **Edit launchers** opens that panel on the skin.
 
+![The ScreenPad dashboard](docs/dashboard.png)
+
 ## Folder map
 
 ```
@@ -27,9 +29,11 @@ Duo\
     Styles.inc               shared fonts and gauge/bar styles
     Gpu.lua                  splits GPU usage into Iris Xe and GeForce
     ToggleAc.ps1             runs one Home Assistant toggle script
-    Embers\ember1.png … 5    white flame sprites, recolored by the skin
+    Embers\                  white sprites (petals, ashes, bubbles, stars)
     Fonts\ShareTechMono-Regular.ttf
-illustro\                    untouched stock skins
+docs\
+  dashboard.png              the filled ScreenPad
+  customize.png              the in-skin Customize panel
 ```
 
 `#@#` in the skin means `Duo\@Resources\`.
@@ -45,7 +49,7 @@ illustro\                    untouched stock skins
 5. **Groups** let one bang update many meters. `Embers`, `Launch`, `Ac`, `Settings`, `GaugeSimple`, and `GaugeMark` are the groups that matter.
 6. `#Name#` is a variable from `Variables.inc`. With `DynamicVariables=1`, the meter reads that variable again on each update instead of only when the skin loads.
 
-The skin's `Update=25` means Rainmeter walks the measures and meters every 25 milliseconds (about 40 frames a second). That is what lets the embers move smoothly. The drift math is halved so they travel at the same speed, with smaller steps between frames. Most stats do not need that speed, so they set `UpdateDivider=40` and refresh about once a second. Disk and battery are slower still.
+The skin's `Update=16` means Rainmeter walks the measures and meters every 16 milliseconds (about 62 frames a second, matching a 60 Hz ScreenPad as closely as a whole-millisecond interval can). That is what lets the embers drift without visible steps. The drift math is scaled to that interval so they travel at the same speed, with a smaller move between frames. Most stats do not need that speed, so they set `UpdateDivider=62` and refresh about once a second. Disk and battery are slower still.
 
 Colors are written `red,green,blue` or `red,green,blue,alpha`, with each channel from 0 to 255.
 
@@ -128,11 +132,13 @@ Home Assistant is `HAHost` (`http://192.168.100.223:8123`). Two scripts toggle t
 
 A click runs `ToggleAc.ps1`, which reads the token from `Variables.inc` and calls `POST /api/services/script/turn_on`. The script only accepts those two entity ids.
 
-The button label is the room temperature, from `current_temperature` on the climate entity. `MeasureMasterAc` and `MeasureKidsAc` download the state about every 10 seconds (`Update=25` times `UpdateRate=400`). `Flags=ForceReload` skips Windows' web cache, which otherwise keeps serving the old temperature. The highlighted button means that unit is on (cool, heat, fan, or auto). A plain button means it is off.
+The button label is the room temperature, from `current_temperature` on the climate entity. `MeasureMasterAc` and `MeasureKidsAc` download the state about every 10 seconds (`Update=16` times `UpdateRate=625`). `Flags=ForceReload` skips Windows' web cache, which otherwise keeps serving the old temperature. The highlighted button means that unit is on (cool, heat, fan, or auto). A plain button means it is off.
 
 The token is a long-lived access token from your Home Assistant profile, under Security. It is a password for the whole Home Assistant account. It lives only in `Variables.inc`, which git does not track. Replacing it does not require a code change. After a bad token, the temperatures stop updating and a click does nothing useful. Create a new token and paste it into `HAToken=`.
 
 ## Customize
+
+![The Customize panel](docs/customize.png)
 
 Right-click the skin, or open **Edit launchers**. Accent colors are an unlabeled vertical stack of squares on the right. The ember row is labeled Embers, then the on/off switch, a letter A at three sizes, the ember color squares, the shape pictures, and Dir with arrows for rise, fall, snow right, and snow left. The other switches run Gauges, Time, then AC. A switch that is on means embers are shown, the AC buttons are shown, the clock is 24-hour, or the gauges are segmented. Off hides the embers, hides the AC buttons, uses 12-hour time, or uses the simple gauges. Choices that only change a number (`EmberScale`, `EmberDir`, `EmberOn`, `EmberShape`, `AcControls`, `GaugeStyle`, 12/24-hour time) apply immediately with `!SetVariable`. Color choices rewrite `Accent`, `AccentHot`, `AccentDim`, the icon colors, or `EmberTint`, then refresh the skin, because those colors are baked into styles and shapes at load.
 

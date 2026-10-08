@@ -1,3 +1,5 @@
 # Local Home Assistant token and saved skin choices.
 **/Variables.inc
 
+# Rainmeter's stock example skins. Keep them installed locally; do not push them.
+illustro/
