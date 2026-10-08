@@ -45,7 +45,7 @@ illustro\                    untouched stock skins
 5. **Groups** let one bang update many meters. `Embers`, `Launch`, `Ac`, `Settings`, `GaugeSimple`, and `GaugeMark` are the groups that matter.
 6. `#Name#` is a variable from `Variables.inc`. With `DynamicVariables=1`, the meter reads that variable again on each update instead of only when the skin loads.
 
-The skin's `Update=50` means Rainmeter walks the measures and meters every 50 milliseconds (about 20 frames a second). That is what lets the embers move smoothly. Most stats do not need that speed, so they set `UpdateDivider=20` and refresh about once a second. Disk and battery are slower still.
+The skin's `Update=25` means Rainmeter walks the measures and meters every 25 milliseconds (about 40 frames a second). That is what lets the embers move smoothly. The drift math is halved so they travel at the same speed, with smaller steps between frames. Most stats do not need that speed, so they set `UpdateDivider=40` and refresh about once a second. Disk and battery are slower still.
 
 Colors are written `red,green,blue` or `red,green,blue,alpha`, with each channel from 0 to 255.
 
@@ -128,7 +128,7 @@ Home Assistant is `HAHost` (`http://192.168.100.223:8123`). Two scripts toggle t
 
 A click runs `ToggleAc.ps1`, which reads the token from `Variables.inc` and calls `POST /api/services/script/turn_on`. The script only accepts those two entity ids.
 
-The button label is the room temperature, from `current_temperature` on the climate entity. `MeasureMasterAc` and `MeasureKidsAc` download the state about every 10 seconds (`Update=50` times `UpdateRate=200`). `Flags=ForceReload` skips Windows' web cache, which otherwise keeps serving the old temperature. The highlighted button means that unit is on (cool, heat, fan, or auto). A plain button means it is off.
+The button label is the room temperature, from `current_temperature` on the climate entity. `MeasureMasterAc` and `MeasureKidsAc` download the state about every 10 seconds (`Update=25` times `UpdateRate=400`). `Flags=ForceReload` skips Windows' web cache, which otherwise keeps serving the old temperature. The highlighted button means that unit is on (cool, heat, fan, or auto). A plain button means it is off.
 
 The token is a long-lived access token from your Home Assistant profile, under Security. It is a password for the whole Home Assistant account. It lives only in `Variables.inc`, which git does not track. Replacing it does not require a code change. After a bad token, the temperatures stop updating and a click does nothing useful. Create a new token and paste it into `HAToken=`.
 
