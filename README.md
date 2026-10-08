@@ -14,7 +14,7 @@ Three glass cards sit on a slightly transparent dark wash, so the wallpaper show
 | System | center, 1124 px | CPU, RAM, Iris Xe, GeForce, battery, disk, network |
 | Launch | right, 360 px | App buttons, and optionally the two AC buttons |
 
-Right-click anywhere on the skin for the same choices as the Customize panel. **Edit launchers** opens that panel on the skin. **Hide dashboard** (or the small minus on the clock card) shrinks the skin to a **Show dashboard** chip in the ScreenPad corner and unloads the ember layer, so the rest of that display is free. Click the chip to bring the dashboard and embers back without opening Rainmeter.
+Right-click the skin for a short menu: **Edit launchers**, **Hide dashboard**, embers on/off, AC on/off, and **Refresh GPU ids**. Size, speed, direction, shape, colors, time, and gauges live on the Customize panel. **Edit launchers** opens that panel. **Hide dashboard** (or the small minus on the clock card) shrinks the skin to a **Show dashboard** chip in the ScreenPad corner and unloads the ember layer, so the rest of that display is free. Click the chip to bring the dashboard and embers back without opening Rainmeter.
 
 ![The ScreenPad dashboard](docs/dashboard.png)
 
@@ -29,7 +29,8 @@ Duo\
     Variables.inc            saved choices and the Home Assistant token (not in git)
     Variables.inc.example    the same file with the token left blank
     Styles.inc               shared fonts and gauge/bar styles
-    Gpu.lua                  splits GPU usage into Iris Xe and GeForce
+    Gpu.lua                  splits GPU RAM into Iris Xe (shared) and GeForce (VRAM)
+    UpdateGpuIds.ps1         rewrites the GPU LUIDs in Gpu.lua after a reboot
     ToggleAc.ps1             runs one Home Assistant toggle script
     Embers\                  white sprites (petals, ashes, bubbles, stars)
     Fonts\ShareTechMono-Regular.ttf
@@ -77,16 +78,11 @@ Five rings sit on the system card: CPU, RAM, Iris Xe, GeForce, and battery. They
 
 `Roundline` can only draw one solid arc. It cannot draw tick marks or a bar made of separate blocks. The ticks are short `Line` shapes placed on the circle. The disk and network bars are rows of rectangles. Do not rotate those tick lines with an anchor point: Rainmeter measures that anchor from the line itself, so the dots leave the center of the ring.
 
-`GaugeStyle` picks which set is visible. `1` is the thin solid rings and the thin bars. `2` is the thicker rings, the tick marks, and the block bars. Right-click the skin and choose **Gauges: Simple** or **Gauges: Segmented**, or use the same buttons on the Customize panel. The percent in the middle of each ring stays either way. The seconds ring follows the same choice. The eight CPU core bars do not.
+`GaugeStyle` picks which set is visible. `1` is the thin solid rings and the thin bars. `2` is the thicker rings, the tick marks, and the block bars. Use **Gauges: Simple** or **Gauges: Segmented** on the Customize panel. CPU, RAM, and battery still show a percent in the middle. The GPU rings show RAM in use (`1.6G`, `512M`) instead, because games often leave engine percent near 0 while they fill video memory. The seconds ring follows the same gauge style. The eight CPU core bars do not.
 
-Iris Xe and the GeForce MX450 are not one Windows counter. `MeasureGpu1` through `MeasureGpu20` read GPU engine usage. `Gpu.lua` groups those engines by adapter id (LUID) and keeps the busiest engine for each card, clamped to 0–100.
+Iris Xe and the GeForce MX450 are not one Windows counter. `MeasureGpuDed1` through `MeasureGpuDed4` read dedicated adapter memory. `MeasureGpuShare1` through `MeasureGpuShare4` read shared adapter memory. `Gpu.lua` groups those by adapter id (LUID). The Iris ring is shared plus dedicated bytes against the Intel shared budget. The GeForce ring is dedicated VRAM against the MX450's advertised VRAM. Both clamp to 0–100 for the arc.
 
-The LUIDs in `Gpu.lua` are assigned at boot:
-
-- Iris Xe: `0x0000ffc9`
-- GeForce MX450: `0x00010890`
-
-After a reboot those ids can change. If both GPU rings freeze at 0, or the wrong card gets the number, open Windows Performance Monitor or a `typeperf` GPU counter, find the new `luid_0x........` values, and update the two constants at the top of `Gpu.lua`. The MX450 also reports 0% while it is asleep. That is the driver, not a broken measure.
+The LUIDs and capacities in `Gpu.lua` are assigned at boot. After a reboot they can change, which freezes both GPU rings at 0M or swaps the cards. Open Customize and click **Refresh GPU ids**, or right-click the skin and choose the same item. That runs `UpdateGpuIds.ps1`, which asks DXGI for the Iris Xe and GeForce MX450 adapter ids and memory sizes, writes the constants at the top of `Gpu.lua`, and refreshes the dashboard. The MX450 can still sit at 0M while it is asleep. That is the driver, not a broken measure.
 
 The disk bar is C: used space. Clicking it runs `explorer.exe C:` so Explorer opens the drive. A trailing backslash (`C:\`) escapes the quote and Explorer opens Documents instead. The network bars scale against `NetMax`, which is 100 MB/s. Battery opens Windows power settings.
 
@@ -114,7 +110,7 @@ Each ember is an `Image` meter in `Duo\Embers\Embers.ini`, in the `Embers` group
 | Bubbles | 3 | `bubble1.png` … `bubble5.png` |
 | Stars | 4 | `star1.png` … `star5.png` |
 
-Right-click the skin, or use the Shape buttons on the Customize panel. The pictures are white with a transparent edge. `ImageTint=#EmberTint#` multiplies that white by the ember color, which is why a tint change recolors them. If the PNGs were already blue, tinting could not turn them rose or amber.
+Use the Shape buttons on the Customize panel. The pictures are white with a transparent edge. `ImageTint=#EmberTint#` multiplies that white by the ember color, which is why a tint change recolors them. If the PNGs were already blue, tinting could not turn them rose or amber.
 
 Motion comes from `MeasureDrift`, a counter that never wraps, so the embers do not fall back into sync. `EmberDir` picks the path:
 
@@ -165,7 +161,7 @@ The token is a long-lived access token from your Home Assistant profile, under S
 
 ![The Customize panel](docs/customize.png)
 
-Right-click the skin, or open **Edit launchers**. Accent colors are an unlabeled vertical stack of squares on the right. Those settings sit in a centered three-column grid: Embers, Size, and Speed on top; Color, Shape, and Dir in the middle; Gauges, Time, and AC on the bottom. Each grid row has extra space above it. A switch that is on means embers are shown, the AC buttons are shown, the clock is 24-hour, or the gauges are segmented. Off hides the embers, hides the AC buttons, uses 12-hour time, or uses the simple gauges. Choices that only change a number (`EmberScale`, `EmberSpeed`, `EmberDir`, `EmberOn`, `EmberShape`, `AcControls`, `GaugeStyle`, 12/24-hour time) apply immediately with `!SetVariable`. Color choices rewrite `Accent`, `AccentHot`, `AccentDim`, the icon colors, or `EmberTint`, then refresh the skin, because those colors are baked into styles and shapes at load.
+Right-click **Edit launchers** to open the panel. Accent colors are an unlabeled vertical stack of squares on the right. They are not on the right-click menu. Those settings sit in a centered three-column grid: Embers, Size, and Speed on top; Color, Shape, and Dir in the middle; Gauges, Time, and AC on the bottom. Each grid row has extra space above it. A switch that is on means embers are shown, the AC buttons are shown, the clock is 24-hour, or the gauges are segmented. Off hides the embers, hides the AC buttons, uses 12-hour time, or uses the simple gauges. Choices that only change a number (`EmberScale`, `EmberSpeed`, `EmberDir`, `EmberOn`, `EmberShape`, `AcControls`, `GaugeStyle`, 12/24-hour time) apply immediately with `!SetVariable`. Color choices rewrite `Accent`, `AccentHot`, `AccentDim`, the icon colors, or `EmberTint`, then refresh the skin, because those colors are baked into styles and shapes at load.
 
 | Pick | Accent | Ember tint |
 | --- | --- | --- |
@@ -180,13 +176,13 @@ Right-click the skin, or open **Edit launchers**. Accent colors are an unlabeled
 
 Ember color uses the first five only. Lime, crimson, and magenta change the accent and the launcher icons.
 
-Launcher names and paths are edited in the panel. The field writes straight back to `Variables.inc` and updates the button, without a full refresh.
+Launcher names and paths are edited in the panel. The field writes straight back to `Variables.inc` and updates the button, without a full refresh. **Refresh GPU ids** (next to Close, and on the right-click menu) runs `UpdateGpuIds.ps1` so the Iris Xe and GeForce rings pick up the LUIDs from this boot.
 
 `SettingsOpen=1` makes the panel show itself again after a refresh. Closing the panel sets it back to 0.
 
 ## Editing without breaking the files
 
-`Dashboard.ini` and `Variables.inc` are UTF-16 LE (byte order mark `FF FE`). `Gpu.lua` and `ToggleAc.ps1` are UTF-8 without a byte order mark. Saving the ini files as UTF-8, or letting a tool rewrite them as ANSI, wipes the skin. If the dashboard suddenly vanishes after a save, the encoding was lost. Restore the file from git and edit it as Unicode.
+`Dashboard.ini` and `Variables.inc` are UTF-16 LE (byte order mark `FF FE`). `Gpu.lua`, `UpdateGpuIds.ps1`, and `ToggleAc.ps1` are UTF-8 without a byte order mark. Saving the ini files as UTF-8, or letting a tool rewrite them as ANSI, wipes the skin. If the dashboard suddenly vanishes after a save, the encoding was lost. Restore the file from git and edit it as Unicode.
 
 ```
 git restore Duo/Dashboard/Dashboard.ini Duo/@Resources/Styles.inc
@@ -211,10 +207,10 @@ In PowerShell the bang must be quoted. An unquoted `!Refresh` is treated as "not
 | You want to… | Look at |
 | --- | --- |
 | Move the skin to another corner | `OriginX`, `OriginY` |
-| Recolor the interface | `Accent`, `AccentHot`, `AccentDim` in `Variables.inc`, or the menu |
-| Switch solid or segmented gauges, disk, and network | right-click **Gauges**, or `GaugeStyle` in `Variables.inc` |
+| Recolor the interface | Customize accent and ember swatches, or `Accent`, `AccentHot`, `AccentDim` in `Variables.inc` |
+| Switch solid or segmented gauges, disk, and network | Customize **Gauges**, or `GaugeStyle` in `Variables.inc` |
 | Change gauge thickness or font | `Styles.inc` |
-| Fix a GPU ring after a reboot | the LUIDs at the top of `Gpu.lua` |
+| Fix a GPU ring after a reboot | Customize **Refresh GPU ids**, or the LUIDs at the top of `Gpu.lua` |
 | Point a button at another program | Customize panel, or `Launch1Path` … `Launch6Path` |
 | Add or retint an ember | `Duo\Embers\Embers.ini`, and the PNGs |
 | Change what the AC buttons call | `ToggleAc.ps1` and the `climate.*` URLs in `Dashboard.ini` |
