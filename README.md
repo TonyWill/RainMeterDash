@@ -14,7 +14,7 @@ Three glass cards sit on a slightly transparent dark wash, so the wallpaper show
 | System | center, 1124 px | CPU, RAM, Iris Xe, GeForce, battery, disk, network |
 | Launch | right, 360 px | App buttons, and optionally the two AC buttons |
 
-Right-click anywhere on the skin for the same choices as the Customize panel. **Edit launchers** opens that panel on the skin.
+Right-click anywhere on the skin for the same choices as the Customize panel. **Edit launchers** opens that panel on the skin. **Hide dashboard** (or the small minus on the clock card) shrinks the skin to a **Show dashboard** chip in the ScreenPad corner and unloads the ember layer, so the rest of that display is free. Click the chip to bring the dashboard and embers back without opening Rainmeter.
 
 ![The ScreenPad dashboard](docs/dashboard.png)
 
@@ -22,7 +22,9 @@ Right-click anywhere on the skin for the same choices as the Customize panel. **
 
 ```
 Duo\
-  Dashboard\Dashboard.ini    the whole skin: measures, meters, menu, panel
+  Dashboard\Dashboard.ini    clock, gauges, launchers, customize, hide chip
+  Embers\Embers.ini          click-through ember layer (16ms, over the cards)
+  Minimized\Minimized.ini    optional companion chip if the dashboard is unloaded
   @Resources\
     Variables.inc            saved choices and the Home Assistant token (not in git)
     Variables.inc.example    the same file with the token left blank
@@ -32,8 +34,12 @@ Duo\
     Embers\                  white sprites (petals, ashes, bubbles, stars)
     Fonts\ShareTechMono-Regular.ttf
 docs\
-  dashboard.png              the filled ScreenPad
+  dashboard.png              the filled ScreenPad (minus on the clock)
+  clock.png                  the clock card
+  system.png                 the gauge card
+  launch.png                 the launcher card
   customize.png              the in-skin Customize panel
+  minimized.png              the Show dashboard chip
 ```
 
 `#@#` in the skin means `Duo\@Resources\`.
@@ -46,16 +52,18 @@ docs\
 2. **Meters** draw. `Shape` meters are the cards, icons, and rings. `String` meters are the labels. `Roundline` meters are the circular gauges. `Bar` meters are the disk and network lines. `Image` meters are the embers.
 3. A meter points at a measure with `MeasureName`. The text `%1` is that measure's value.
 4. **Bangs** are the commands in square brackets, such as `[!Refresh]` or `[!SetVariable EmberOn 0]`. They run from a click, a hover, or a measure condition.
-5. **Groups** let one bang update many meters. `Embers`, `Launch`, `Ac`, `Settings`, `GaugeSimple`, and `GaugeMark` are the groups that matter.
+5. **Groups** let one bang update many meters. `Embers`, `Launch`, `Ac`, `Settings`, `GaugeSimple`, `GaugeMark`, `Main`, and `Restore` are the groups that matter. Hide dashboard hides `Main`, unloads `Duo\Embers`, and shows the restore chip; the chip refreshes the dashboard, which starts the ember layer again.
 6. `#Name#` is a variable from `Variables.inc`. With `DynamicVariables=1`, the meter reads that variable again on each update instead of only when the skin loads.
 
-The skin's `Update=16` means Rainmeter walks the measures and meters every 16 milliseconds (about 62 frames a second, matching a 60 Hz ScreenPad as closely as a whole-millisecond interval can). That is what lets the embers drift without visible steps. The drift math is scaled to that interval so they travel at the same speed, with a smaller move between frames. Most stats do not need that speed, so they set `UpdateDivider=62` and refresh about once a second. Disk and battery are slower still.
+`Duo\Embers` uses `Update=16`, so those sprites move every 16 milliseconds (about 62 frames a second, matching a 60 Hz ScreenPad as closely as a whole-millisecond interval can). That skin is click-through and Stay Topmost, so the embers drift over the cards without sharing the dashboard's draw pass. The drift math is scaled to that interval so they travel at the same speed, with a smaller move between frames. The dashboard also uses `Update=16` for the seconds ring, but most stats set `UpdateDivider=62` and refresh about once a second. Disk and battery are slower still.
 
 Colors are written `red,green,blue` or `red,green,blue,alpha`, with each channel from 0 to 255.
 
 ## Clock
 
 The time uses Share Tech Mono at 72 pt. Hours sit above the minutes, with two dots between them. `HourFormat` is `%H` for 24-hour time and `%I` for 12-hour time. `Time12=1` also shows AM/PM.
+
+![The clock card](docs/clock.png)
 
 The ring around the time is the seconds hand, drawn as a round line. Seconds only run from 0 to 59, so a plain "percent of 60" gauge never quite closes. `MeasureSecondSweep` stretches 59 seconds to just under a full circle (`59.97 / 59`). At second 59 the ring meets itself. At second 0 it starts over. Do not change that formula to an exact 360 degrees. Direct2D drops a full circle and the ring disappears.
 
@@ -64,6 +72,8 @@ The font file is loaded only when Rainmeter itself starts, not when a skin is re
 ## System gauges
 
 Five rings sit on the system card: CPU, RAM, Iris Xe, GeForce, and battery. They are `Roundline` meters. `styleRingTrack` and `styleRingValue` in `Styles.inc` are only the shared defaults: start angle, sweep, inner radius (`LineStart`), outer radius (`LineLength`), and color. Any one gauge can override those on its own meter. The ring thickness is `LineLength` minus `LineStart` (6 pixels on the 124-pixel gauges). The seconds ring sets its own radii in the clock section.
+
+![The system gauges](docs/system.png)
 
 `Roundline` can only draw one solid arc. It cannot draw tick marks or a bar made of separate blocks. The ticks are short `Line` shapes placed on the circle. The disk and network bars are rows of rectangles. Do not rotate those tick lines with an anchor point: Rainmeter measures that anchor from the line itself, so the dots leave the center of the ring.
 
@@ -80,9 +90,22 @@ After a reboot those ids can change. If both GPU rings freeze at 0, or the wrong
 
 The disk bar is C: used space. Clicking it runs `explorer.exe C:` so Explorer opens the drive. A trailing backslash (`C:\`) escapes the quote and Explorer opens Documents instead. The network bars scale against `NetMax`, which is 100 MB/s. Battery opens Windows power settings.
 
+## Hide and restore
+
+The ScreenPad is a full Windows display. When you need it for something else, you should not have to open Rainmeter's Manage window.
+
+- Click the small **minus** on the top-left of the clock card, or right-click the skin and choose **Hide dashboard**.
+- The dashboard shrinks to a **Show dashboard** chip in that same corner. `Duo\Embers` unloads at the same time, so sprites do not keep drifting over the wallpaper.
+- The rest of the 1920x515 display is then free for whatever you put there.
+- Click **Show dashboard** to refresh the dashboard. That starts the ember layer again and puts it back over the cards.
+
+![The Show dashboard chip](docs/minimized.png)
+
+Right-click **Edit launchers** still opens Customize. Opening that panel unloads the ember layer so the controls stay clickable and the Embers switch still records on/off. Closing the panel starts the layer again if the switch is on.
+
 ## Embers
 
-Each ember is an `Image` meter in the `Embers` group. `EmberShape` picks the picture set, and `EmberPrefix` is the file name in front of `1.png` through `5.png`:
+Each ember is an `Image` meter in `Duo\Embers\Embers.ini`, in the `Embers` group. That config is a separate Rainmeter skin: 16ms updates, click-through, and Stay Topmost (`!ZPos 2`) so the sprites sit over the dashboard cards. The dashboard itself stays at Topmost (`!ZPos 1`). Do not set both skins to Stay Topmost; they would flicker. `EmberShape` picks the picture set, and `EmberPrefix` is the file name in front of `1.png` through `5.png`:
 
 | Shape | `EmberShape` | Files |
 | --- | --- | --- |
@@ -102,13 +125,15 @@ Motion comes from `MeasureDrift`, a counter that never wraps, so the embers do n
 | 3 | Diagonal, left to right, like snow |
 | 4 | Diagonal, right to left |
 
-`EmberScale` is `0.65` small, `1` medium, or `1.45` large. `EmberOn=0` hides the group.
+`EmberScale` is `0.65` small, `1` medium, or `1.45` large. `EmberSpeed` is `1` a medium drift, `4` quicker, or `10` a storm. `EmberOn=0` hides the group.
 
 `ImageRotate` is in degrees. A tiny fraction looks frozen because the sprite barely turns.
 
 ## Launchers
 
 Six buttons launch a program named in `Variables.inc`:
+
+![The launcher card](docs/launch.png)
 
 | Slot | Default | Variable |
 | --- | --- | --- |
@@ -140,7 +165,7 @@ The token is a long-lived access token from your Home Assistant profile, under S
 
 ![The Customize panel](docs/customize.png)
 
-Right-click the skin, or open **Edit launchers**. Accent colors are an unlabeled vertical stack of squares on the right. The ember row is labeled Embers, then the on/off switch, a letter A at three sizes, the ember color squares, the shape pictures, and Dir with arrows for rise, fall, snow right, and snow left. The other switches run Gauges, Time, then AC. A switch that is on means embers are shown, the AC buttons are shown, the clock is 24-hour, or the gauges are segmented. Off hides the embers, hides the AC buttons, uses 12-hour time, or uses the simple gauges. Choices that only change a number (`EmberScale`, `EmberDir`, `EmberOn`, `EmberShape`, `AcControls`, `GaugeStyle`, 12/24-hour time) apply immediately with `!SetVariable`. Color choices rewrite `Accent`, `AccentHot`, `AccentDim`, the icon colors, or `EmberTint`, then refresh the skin, because those colors are baked into styles and shapes at load.
+Right-click the skin, or open **Edit launchers**. Accent colors are an unlabeled vertical stack of squares on the right. Those settings sit in a centered three-column grid: Embers, Size, and Speed on top; Color, Shape, and Dir in the middle; Gauges, Time, and AC on the bottom. Each grid row has extra space above it. A switch that is on means embers are shown, the AC buttons are shown, the clock is 24-hour, or the gauges are segmented. Off hides the embers, hides the AC buttons, uses 12-hour time, or uses the simple gauges. Choices that only change a number (`EmberScale`, `EmberSpeed`, `EmberDir`, `EmberOn`, `EmberShape`, `AcControls`, `GaugeStyle`, 12/24-hour time) apply immediately with `!SetVariable`. Color choices rewrite `Accent`, `AccentHot`, `AccentDim`, the icon colors, or `EmberTint`, then refresh the skin, because those colors are baked into styles and shapes at load.
 
 | Pick | Accent | Ember tint |
 | --- | --- | --- |
@@ -191,5 +216,6 @@ In PowerShell the bang must be quoted. An unquoted `!Refresh` is treated as "not
 | Change gauge thickness or font | `Styles.inc` |
 | Fix a GPU ring after a reboot | the LUIDs at the top of `Gpu.lua` |
 | Point a button at another program | Customize panel, or `Launch1Path` … `Launch6Path` |
-| Add or retint an ember | `Dashboard.ini` section `Embers over the cards`, and the PNGs |
+| Add or retint an ember | `Duo\Embers\Embers.ini`, and the PNGs |
 | Change what the AC buttons call | `ToggleAc.ps1` and the `climate.*` URLs in `Dashboard.ini` |
+| Hide or restore the dashboard | minus on the clock, or right-click **Hide dashboard**; the **Show dashboard** chip restores it |
