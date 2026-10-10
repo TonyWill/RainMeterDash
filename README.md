@@ -1,6 +1,6 @@
 # ScreenPad dashboard
 
-This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. Rainmeter's stock `illustro` suite can stay installed beside it. Git does not track that folder.
+This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. `Cinders\Overlay` is the click-through cinder layer on the primary monitor. Rainmeter's stock `illustro` suite can stay installed beside it. Git does not track that folder.
 
 The ScreenPad is the second display: 1920 by 515 pixels, with its top-left corner at virtual-screen position `0, 1080`. On every refresh the skin turns dragging and edge-snapping off, stays above the desktop, and moves itself to that corner. Those coordinates are `OriginX` and `OriginY` in `Duo\@Resources\Variables.inc`.
 
@@ -34,6 +34,11 @@ Duo\
     ToggleAc.ps1             runs one Home Assistant toggle script
     Embers\                  white sprites (petals, ashes, bubbles, stars)
     Fonts\ShareTechMono-Regular.ttf
+Cinders\
+  Overlay\Overlay.ini        click-through cinders on the primary monitor (33ms)
+  @Resources\
+    Config.inc               cinder knobs (on, density, speed, sway, size, colors)
+    Embers\                  white glow sprites (spark, ember, bokeh, streak)
 docs\
   dashboard.png              the filled ScreenPad (minus on the clock)
   clock.png                  the clock card
@@ -43,7 +48,7 @@ docs\
   minimized.png              the Show dashboard chip
 ```
 
-`#@#` in the skin means `Duo\@Resources\`.
+`#@#` in a Duo skin means `Duo\@Resources\`. In the cinder overlay it means `Cinders\@Resources\`.
 
 ## How the skin is built
 
@@ -180,6 +185,29 @@ Launcher names and paths are edited in the panel. The field writes straight back
 
 `SettingsOpen=1` makes the panel show itself again after a refresh. Closing the panel sets it back to 0.
 
+## Cinders
+
+`Cinders\Overlay` draws rising cinders on the primary monitor, the display Windows calls the main one. It does not draw on the ScreenPad or on the monitor stacked above the primary. On every refresh the skin turns dragging and edge-snapping off, moves itself to that monitor's top-left corner, and uses `!ZPos -2` so it sits on the desktop, under icons and windows. `!ClickThrough 1` lets the mouse pass through.
+
+That also means the overlay has no right-click menu. Edit `Cinders\@Resources\Config.inc`, then refresh **Cinders → Overlay** from the Rainmeter tray icon.
+
+Each cinder is two white images: a soft halo tinted by `EmberTint`, and a smaller hot core tinted by `EmberCore`. The core is its own meter, not a `Container`. A container meter is not drawn, so putting the halo in one would leave only the core.
+
+`EmberSway` chooses the path:
+
+| Value | Motion |
+| --- | --- |
+| 0 | Rise straight up |
+| 1 | Rise and drift left and right |
+
+The drift is a slow sine, a different width and pace on each cinder, about three times the straight-path margin. The same margin grows when sway is on, so a cinder near the left or right edge still has room to wander and stays on the primary monitor. `EmberSpeed` scales the rise and the drift together. `1` is a slow rise. `2` is twice as fast.
+
+`EmberDensity` shows 16, 32, or 48 cinders (`1`, `2`, or `3`). `EmberOn=0` hides them. `EmberScale` is the drawn size (`1` is the built size, `0.7` smaller, `1.6` larger). `EmberPeak` is the brightest a cinder gets, from 0 to 255. The sprites in `@Resources\Embers` stay white so those tints can recolor them.
+
+The overlay updates every 33 milliseconds, about 30 frames a second. `Duo\Embers` updates every 16 milliseconds in the same Rainmeter process. With both skins loaded, an update is sometimes late and a cinder skips ahead. A higher `EmberSpeed` makes that skip a longer jump, so the motion looks stuttered. The path itself is continuous. Hiding the dashboard unloads the ScreenPad embers and leaves more of each update for the overlay.
+
+`Overlay.ini` and `Config.inc` are UTF-8. They are not the UTF-16 files described below.
+
 ## Editing without breaking the files
 
 `Dashboard.ini` and `Variables.inc` are UTF-16 LE (byte order mark `FF FE`). `Gpu.lua`, `UpdateGpuIds.ps1`, and `ToggleAc.ps1` are UTF-8 without a byte order mark. Saving the ini files as UTF-8, or letting a tool rewrite them as ANSI, wipes the skin. If the dashboard suddenly vanishes after a save, the encoding was lost. Restore the file from git and edit it as Unicode.
@@ -194,10 +222,11 @@ That puts the code back to the last commit. It does not touch `Variables.inc`, s
 
 Rainmeter's own config, `%AppData%\Rainmeter\Rainmeter.ini`, is also UTF-16. Do not rewrite it with a normal text save.
 
-To see a change: right-click the skin and choose Refresh, or run:
+To see a dashboard change: right-click the skin and choose Refresh, or run the command below. The cinder overlay cannot be right-clicked. Refresh it from the Rainmeter tray icon, or with the second command.
 
 ```
 "C:\Program Files\Rainmeter\Rainmeter.exe" !Refresh "Duo\Dashboard"
+"C:\Program Files\Rainmeter\Rainmeter.exe" !Refresh "Cinders\Overlay"
 ```
 
 In PowerShell the bang must be quoted. An unquoted `!Refresh` is treated as "not Refresh" and the command fails.
@@ -212,6 +241,8 @@ In PowerShell the bang must be quoted. An unquoted `!Refresh` is treated as "not
 | Change gauge thickness or font | `Styles.inc` |
 | Fix a GPU ring after a reboot | Customize **Refresh GPU ids**, or the LUIDs at the top of `Gpu.lua` |
 | Point a button at another program | Customize panel, or `Launch1Path` … `Launch6Path` |
-| Add or retint an ember | `Duo\Embers\Embers.ini`, and the PNGs |
+| Add or retint a ScreenPad ember | `Duo\Embers\Embers.ini`, and the PNGs |
+| Turn cinder sway on or off | `EmberSway` in `Cinders\@Resources\Config.inc` (`0` straight, `1` drift), then refresh `Cinders\Overlay` |
+| Change cinder count, speed, size, or color | `EmberDensity`, `EmberSpeed`, `EmberScale`, `EmberTint`, `EmberCore`, `EmberPeak` in that same file |
 | Change what the AC buttons call | `ToggleAc.ps1` and the `climate.*` URLs in `Dashboard.ini` |
 | Hide or restore the dashboard | minus on the clock, or right-click **Hide dashboard**; the **Show dashboard** chip restores it |
