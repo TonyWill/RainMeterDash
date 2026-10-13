@@ -1,6 +1,6 @@
 # ScreenPad dashboard
 
-This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. `Cinders\Overlay` is the click-through cinder layer on the primary monitor. Rainmeter's stock `illustro` suite can stay installed beside it. Git does not track that folder.
+This folder is a Rainmeter skins directory. The skin that fills the ZenBook Duo ScreenPad is `Duo\Dashboard`. `Cinders\Overlay` is the rising cinder layer. It starts on the primary monitor, and the knobs in `Cinders\@Resources\Config.inc` can turn that same rise on for the other displays, including all of them at once. Rainmeter's stock `illustro` suite can stay installed beside it. Git does not track that folder.
 
 The ScreenPad is the second display: 1920 by 515 pixels, with its top-left corner at virtual-screen position `0, 1080`. On every refresh the skin turns dragging and edge-snapping off, stays above the desktop, and moves itself to that corner. Those coordinates are `OriginX` and `OriginY` in `Duo\@Resources\Variables.inc`.
 
@@ -35,9 +35,11 @@ Duo\
     Embers\                  white sprites (petals, ashes, bubbles, stars)
     Fonts\ShareTechMono-Regular.ttf
 Cinders\
-  Overlay\Overlay.ini        click-through cinders on the primary monitor (33ms)
+  Overlay\Overlay.ini        rising cinders on monitor 1, the primary (33ms)
+  Monitor2\ Monitor3\        same skin for the other displays, generated, not in git
   @Resources\
-    Config.inc               cinder knobs (on, density, speed, sway, size, colors)
+    Config.inc               cinder knobs, including which displays are on
+    SyncMonitors.ps1         rewrites Monitor2 and Monitor3 after a formula edit in Overlay.ini
     Embers\                  white glow sprites (spark, ember, bokeh, streak)
 docs\
   dashboard.png              the filled ScreenPad (minus on the clock)
@@ -187,7 +189,11 @@ Launcher names and paths are edited in the panel. The field writes straight back
 
 ## Cinders
 
-`Cinders\Overlay` draws rising cinders on the primary monitor, the display Windows calls the main one. It does not draw on the ScreenPad or on the monitor stacked above the primary. On every refresh the skin turns dragging and edge-snapping off, moves itself to that monitor's top-left corner, and uses `!ZPos -2` so it sits on the desktop, under icons and windows. `!ClickThrough 1` lets the mouse pass through.
+`Cinders\Overlay` draws rising cinders on monitor 1, the display Windows calls the main one. `Monitor1`, `Monitor2`, and `Monitor3` in `Config.inc` each turn that same rise on or off. `1` is on and `0` is off, and any mix is allowed. All three set to `1` shows the rise on every display at the same time. Monitor 1 is the primary screen. Monitors 2 and 3 are the other displays in Rainmeter's order (the ScreenPad and the monitor above it, not necessarily in that order). Turn one on by itself if you need to see which number is which.
+
+On every refresh the primary skin turns dragging and edge-snapping off, moves itself to that monitor's top-left corner, and uses `!ZPos -2` so it sits on the desktop, under icons and windows. `!ClickThrough 1` lets the mouse pass through. That same refresh turns `Cinders\Monitor2` and `Cinders\Monitor3` on or off to match the knobs. Setting a knob to `0` unloads that display. Those copies sit above the wallpaper. On Desktop is clipped to the primary screen, and the bottom of the window order ends up behind the wallpaper on the other displays. The ScreenPad copy is raised over the dashboard, because that dashboard fills the ScreenPad. Clicks still pass through.
+
+`Monitor2` and `Monitor3` are generated from `Overlay.ini` by `SyncMonitors.ps1`. Run that script after a formula edit in `Overlay.ini`, then refresh. Turning displays on or off only needs the refresh. Git does not track the generated copies. Refresh does not open PowerShell.
 
 That also means the overlay has no right-click menu. Edit `Cinders\@Resources\Config.inc`, then refresh **Cinders → Overlay** from the Rainmeter tray icon.
 
@@ -200,11 +206,11 @@ Each cinder is two white images: a soft halo tinted by `EmberTint`, and a smalle
 | 0 | Rise straight up |
 | 1 | Rise and drift left and right |
 
-The drift is a slow sine, a different width and pace on each cinder, about three times the straight-path margin. The same margin grows when sway is on, so a cinder near the left or right edge still has room to wander and stays on the primary monitor. `EmberSpeed` scales the rise and the drift together. `1` is a slow rise. `2` is twice as fast.
+The drift is a slow sine, a different width and pace on each cinder, about three times the straight-path margin. The same margin grows when sway is on, so a cinder near the left or right edge still has room to wander and stays on that monitor. `EmberSpeed` scales the rise and the drift together. `1` is a slow rise. `2` is twice as fast.
 
 `EmberDensity` shows 16, 32, or 48 cinders (`1`, `2`, or `3`). `EmberOn=0` hides them. `EmberScale` is the drawn size (`1` is the built size, `0.7` smaller, `1.6` larger). `EmberPeak` is the brightest a cinder gets, from 0 to 255. The sprites in `@Resources\Embers` stay white so those tints can recolor them.
 
-The overlay updates every 33 milliseconds, about 30 frames a second. `Duo\Embers` updates every 16 milliseconds in the same Rainmeter process. With both skins loaded, an update is sometimes late and a cinder skips ahead. A higher `EmberSpeed` makes that skip a longer jump, so the motion looks stuttered. The path itself is continuous. Hiding the dashboard unloads the ScreenPad embers and leaves more of each update for the overlay.
+The overlay updates every 33 milliseconds, about 30 frames a second. Each display that is turned on is another skin on that same interval. `Duo\Embers` updates every 16 milliseconds in the same Rainmeter process. With those skins loaded together, an update is sometimes late and a cinder skips ahead. A higher `EmberSpeed` makes that skip a longer jump, so the motion looks stuttered. The path itself is continuous. Hiding the dashboard unloads the ScreenPad embers and leaves more of each update for the overlay.
 
 `Overlay.ini` and `Config.inc` are UTF-8. They are not the UTF-16 files described below.
 
@@ -243,6 +249,7 @@ In PowerShell the bang must be quoted. An unquoted `!Refresh` is treated as "not
 | Point a button at another program | Customize panel, or `Launch1Path` … `Launch6Path` |
 | Add or retint a ScreenPad ember | `Duo\Embers\Embers.ini`, and the PNGs |
 | Turn cinder sway on or off | `EmberSway` in `Cinders\@Resources\Config.inc` (`0` straight, `1` drift), then refresh `Cinders\Overlay` |
+| Show the rise on another display, or on all of them | `Monitor1`, `Monitor2`, `Monitor3` in that same file (`1` on, `0` off), then refresh `Cinders\Overlay` |
 | Change cinder count, speed, size, or color | `EmberDensity`, `EmberSpeed`, `EmberScale`, `EmberTint`, `EmberCore`, `EmberPeak` in that same file |
 | Change what the AC buttons call | `ToggleAc.ps1` and the `climate.*` URLs in `Dashboard.ini` |
 | Hide or restore the dashboard | minus on the clock, or right-click **Hide dashboard**; the **Show dashboard** chip restores it |

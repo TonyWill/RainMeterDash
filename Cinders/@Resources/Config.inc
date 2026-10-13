@@ -24,3 +24,11 @@ EmberCore=255,236,198
 
 ; Peak opacity of a cinder, from 0 to 255. Each sprite scales this a little.
 EmberPeak=210
+
+; Which displays show the rise. 1 is on, 0 is off. Any mix works, and all three on is every display at once.
+; 1 is the primary screen. 2 and 3 are the other displays, in Rainmeter's order.
+; Change these, then refresh Cinders\Overlay. That loads the displays that are on.
+; After editing formulas in Overlay.ini, run @Resources\SyncMonitors.ps1, then refresh again.
+Monitor1=1
+Monitor2=1
+Monitor3=0

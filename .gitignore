@@ -3,3 +3,7 @@
 
 # Rainmeter's stock example skins. Keep them installed locally; do not push them.
 illustro/
+
+# Copies of Cinders\Overlay for the other displays. SyncMonitors.ps1 rewrites them.
+Cinders/Monitor2/
+Cinders/Monitor3/
